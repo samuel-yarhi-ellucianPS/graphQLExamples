@@ -1,4 +1,4 @@
-import { Dropdown, DropdownItem, List, ListItem, ListItemText, Typography } from '@ellucian/react-design-system/core';
+import { List, ListItem, ListItemText, Typography } from '@ellucian/react-design-system/core';
 import { withStyles } from '@ellucian/react-design-system/core/styles';
 import { spacing10, spacing40 } from '@ellucian/react-design-system/core/styles/tokens';
 import PropTypes from 'prop-types';
@@ -47,15 +47,13 @@ const GraphQLQueryCard = (props) => {
         cache: { getItem, storeItem }
     } = props;
     const intl = useIntl();
-    const [ buildings, setBuildings ] = useState();
-    const [ sites, setSites ] = useState();
-    const [ selectedSite, setSelectedSite ] = useState();
+    const [sites, setSites] = useState();
 
     useEffect(() => {
         (async () => {
             setLoadingStatus(true);
 
-            const {data: cachedData, expired: cachedDataExpired=true} = await getItem({key: cacheKey});
+            const { data: cachedData, expired: cachedDataExpired = true } = await getItem({ key: cacheKey });
             if (cachedData) {
                 setLoadingStatus(false);
                 setSites(() => cachedData);
@@ -64,7 +62,7 @@ const GraphQLQueryCard = (props) => {
                 try {
                     const sitesData = await getEthosQuery({ queryId: 'list-sites' });
                     const { data: { sites: { edges: siteEdges } = [] } = {} } = sitesData;
-                    const sites = siteEdges.map( edge => edge.node );
+                    const sites = siteEdges.map(edge => edge.node);
                     setSites(() => sites);
                     storeItem({ key: cacheKey, data: sites });
                     setLoadingStatus(false);
@@ -82,83 +80,30 @@ const GraphQLQueryCard = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    useEffect(
-        () => {
-            (async () => {
-                if (selectedSite) {
-                    // load the buildings
-                    let buildings = [];
-
-                    try {
-                        const buildingsData = await getEthosQuery({ queryId: 'list-buildings', properties: {'siteId' : selectedSite } });
-                        const { data: { buildings: { edges: buildingEdges } = [] } = {} } = buildingsData;
-                        buildings = buildingEdges.map( edge => edge.node );
-                    } catch (error) {
-                        console.error('ethosQuery failed', error);
-                        setErrorMessage({
-                            headerMessage: intl.formatMessage({ id: 'GraphQLQueryCard-fetchFailed' }),
-                            textMessage: intl.formatMessage({ id: 'GraphQLQueryCard-buildingsFetchFailed' }),
-                            iconName: 'error',
-                            iconColor: '#D42828'
-                        });
-                    }
-                    setBuildings(() => buildings);
-                }
-            })();
-        },
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [ selectedSite ]
-    );
-
     /**
-     * Handle a dropdown site selection, by loading the associated buildings
+     * Renders a list of available sites.
      *
-     * @param {Event} event The dropdown selection event.
+     * Displays site names in a read-only list using the sites data model through a GraphQL query.
      */
-    const siteSelected = (event) => {
-        setSelectedSite(event.target.value);
-    };
 
     return (
         <Fragment>
             {sites && (
                 <div className={classes.card}>
-                    <Dropdown
-                        className={classes.dropdown}
-                        FormControlProps={{ classes: { root: classes.formControl } }}
-                        id="graphql-query-card-sites-dropdown"
-                        label={intl.formatMessage({ id: 'GraphQLQueryCard-sites' })}
-                        onChange={siteSelected}
-                        value={selectedSite}
-                        fullWidth
-                    >
-                        {sites.map((site) => {
-                            return <DropdownItem key={site.id} label={site.title} value={site.id} />;
-                        })}
-                    </Dropdown>
-                    {buildings && buildings.length > 0 && (
-                        <List className={classes.list}>
-                            {buildings.map((building, index) => (
-                                <ListItem key={`building-${index}`}>
-                                    <ListItemText primary={building.title} />
+                    {Array.isArray(sites) && sites.length > 0 ? (
+                        <List className={classes.list} aria-label={intl.formatMessage({ id: 'GraphQLQueryCard-sites', defaultMessage: 'List of sites' })}>
+                            {sites.map((site) => (
+                                <ListItem key={site.id} disablePadding>
+                                    <ListItemText primary={site.title} />
                                 </ListItem>
                             ))}
                         </List>
-                    )}
-                    {buildings &&
-                    buildings.length == 0 &&
-                    selectedSite && (
-                        <Typography className={classes.text} variant="body1">
-                            {intl.formatMessage({ id: 'GraphQLQueryCard-noBuildings' })}
+                    ) : (
+                        <Typography className={classes.text} variant="body2" color="textSecondary">
+                            {intl.formatMessage({ id: 'GraphQLQueryCard-sitesFetchFailed', defaultMessage: 'No sites available.' })}
                         </Typography>
                     )}
                 </div>
-            )}
-            {sites &&
-            !selectedSite && (
-                <Typography className={classes.text} variant="body1">
-                    {intl.formatMessage({ id: 'GraphQLQueryCard-noSelectedSite' })}
-                </Typography>
             )}
         </Fragment>
     );

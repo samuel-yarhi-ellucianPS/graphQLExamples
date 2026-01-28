@@ -1,12 +1,12 @@
 module.exports = {
-    name: 'GraphQLTest',
-    publisher: 'Sample',
+    name: 'GraphQL Sites Test',
+    publisher: 'Name of developer here',
     cards: [{
         type: 'GraphQLQueryCard',
         source: './src/cards/GraphQLQueryCard',
         miniCardIcon: 'building',
         category: 'work',
-        title: 'Buildings Test',
+        title: 'List of Sites',
         displayCardType: 'GraphQL Query',
         description: 'GraphQL Query',
         queries: {
@@ -25,36 +25,6 @@ module.exports = {
                                     node {
                                         id
                                         title
-                                    }
-                                }
-                            }
-                        }`
-                }
-            ],
-            'list-buildings': [
-                {
-                    resourceVersions: {
-                        buildings: { min: 6 },
-                        sites: { min: 6 },
-                    },
-                    query:
-                        `query listBuildings($siteId: ID){
-                            buildings : {buildings}(
-                                filter: {
-                                    {site}: {
-                                        id: { EQ: $siteId }
-                                    }
-                                },
-                                sort: { title: ASC }
-                            )
-                            {
-                                edges {
-                                    node {
-                                        id
-                                        title
-                                        site  : {site} {
-                                            id
-                                        }
                                     }
                                 }
                             }
